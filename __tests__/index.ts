@@ -2,7 +2,7 @@ import supertest from "supertest";
 import handlebars from "handlebars";
 import { readFileSync } from "fs";
 import express from "express";
-import { getRouter } from "..";
+import { getRouter } from "nextify-middleware";
 import path from "path";
 
 const app = express();
