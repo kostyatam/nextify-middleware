@@ -5,6 +5,10 @@ import defaultHandler from "./default/handler";
 import fs, { Dir, read } from "fs";
 import handlebars from "handlebars";
 
+require("handlebars-helpers")({
+  handlebars: handlebars,
+});
+
 type DefaultHandlerData = ReturnType<typeof defaultHandler>;
 
 type Handler = (

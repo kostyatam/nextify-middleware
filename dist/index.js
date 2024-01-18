@@ -10,6 +10,9 @@ const types_1 = require("./types");
 const handler_1 = __importDefault(require("./default/handler"));
 const fs_1 = __importDefault(require("fs"));
 const handlebars_1 = __importDefault(require("handlebars"));
+require("handlebars-helpers")({
+    handlebars: handlebars_1.default,
+});
 const compileFile = (filePath) => handlebars_1.default.compile(fs_1.default.readFileSync(filePath, "utf8"));
 const defaultLayout = compileFile(path_1.default.join(__dirname, "default/layout.hbs"));
 const defaultView = compileFile(path_1.default.join(__dirname, "default/view.hbs"));
