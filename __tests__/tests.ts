@@ -122,4 +122,13 @@ describe("Check router", () => {
       })
     );
   });
+
+  it(`check htmx request`, async () => {
+    const year = new Date().getFullYear().toString();
+    const response = await supertest(app)
+      .get("/helpers/" + year)
+      .set("HX-Request", "true");
+
+    expect(response.text.trim()).toBe(year);
+  });
 });

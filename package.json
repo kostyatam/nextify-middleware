@@ -4,7 +4,7 @@
   "description": "express middleware for generating *nextjs-like* filesystem based router with typescript handlers, handlebars templates and htmx",
   "main": "dist/index.js",
   "scripts": {
-    "test": "npm link \"nextify-middleware\" && jest",
+    "test": "npm link \"nextify-middleware\" && jest --silent=false",
     "build": "rimraf dist && tsc --project ./tsconfig.json && ls dist && cp default/**.hbs dist/default"
   },
   "author": "",

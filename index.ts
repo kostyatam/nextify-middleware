@@ -34,10 +34,11 @@ function getRouteHandler(route: Route): RequestHandler {
       : {};
     const data = { ...defaultData, ...handlerData };
     const body = view(data);
+
     if (defaultData.isHtmxRequest) {
       res.send(body);
     } else {
-      res.send(layout({ body }));
+      res.send(layout({ ...data, body }));
     }
   };
 }

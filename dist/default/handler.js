@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 function defaultHandler(req) {
-    const isHtmxRequest = req.headers["HX-Request"] === "true";
+    const isHtmxRequest = req.get("HX-Request") === "true";
     return {
         isHtmxRequest,
         url: req.url,

@@ -32,7 +32,7 @@ function getRouteHandler(route) {
             res.send(body);
         }
         else {
-            res.send(layout({ body }));
+            res.send(layout(Object.assign(Object.assign({}, data), { body })));
         }
     };
 }
