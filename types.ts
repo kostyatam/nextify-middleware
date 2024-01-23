@@ -6,6 +6,7 @@ export interface Route extends RouteLayout {
 
 export interface RouteLayout {
   layout?: string;
+  layoutHandlerPath?: string;
 }
 
 export type DirTree = {

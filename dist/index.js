@@ -10,23 +10,26 @@ const types_1 = require("./types");
 const handler_1 = __importDefault(require("./default/handler"));
 const fs_1 = __importDefault(require("fs"));
 const handlebars_1 = __importDefault(require("handlebars"));
+const utils_1 = require("./utils");
 require("handlebars-helpers")({
     handlebars: handlebars_1.default,
 });
-const compileFile = (filePath) => handlebars_1.default.compile(fs_1.default.readFileSync(filePath, "utf8"));
-const defaultLayout = compileFile(path_1.default.join(__dirname, "default/layout.hbs"));
-const defaultView = compileFile(path_1.default.join(__dirname, "default/view.hbs"));
+const defaultLayout = (0, utils_1.compileFile)(path_1.default.join(__dirname, "default/layout.hbs"));
+const defaultView = (0, utils_1.compileFile)(path_1.default.join(__dirname, "default/view.hbs"));
 function getRouteHandler(route) {
     const view = route.templatePath
-        ? compileFile(route.templatePath)
+        ? (0, utils_1.compileFile)(route.templatePath)
         : defaultView;
-    const layout = route.layout ? compileFile(route.layout) : defaultLayout;
+    const layout = route.layout ? (0, utils_1.compileFile)(route.layout) : defaultLayout;
     return (req, res) => {
         const defaultData = (0, handler_1.default)(req);
         const handlerData = route.handlerPath
             ? require(route.handlerPath).default(req)
             : {};
-        const data = Object.assign(Object.assign({}, defaultData), handlerData);
+        const layoutData = route.layoutHandlerPath
+            ? require(route.layoutHandlerPath).default(req)
+            : {};
+        const data = Object.assign(Object.assign(Object.assign({}, defaultData), layoutData), handlerData);
         const body = view(data);
         if (defaultData.isHtmxRequest) {
             res.send(body);
@@ -45,11 +48,13 @@ const getRouter = (rootPath) => {
     function buildRouter(dirTree) {
         const files = Object.keys(dirTree);
         for (const key of files) {
-            if (key === "layout") {
+            if (key === "layout" || key === "layoutHandlerPath") {
                 continue;
             }
             const value = dirTree[key];
             value.layout = value.layout || dirTree.layout;
+            value.layoutHandlerPath =
+                value.layoutHandlerPath || dirTree.layoutHandlerPath;
             if ((0, types_1.isRoute)(value)) {
                 router.get(value.routePath, getRouteHandler(value));
             }
@@ -72,9 +77,13 @@ const getRouter = (rootPath) => {
                 continue;
             }
             const { dir, name, ext, base } = path_1.default.parse(relativePath);
-            const routePath = path_1.default.join("/", dir.replace(/^\[(.+)\]$/, ":$1"), name !== "index" ? name.replace(/^\[(.+)\]$/, ":$1") : "");
+            const routePath = path_1.default.join("/", dir.replace(/\[(\w+)\]/g, ":$1"), name !== "index" ? name.replace(/^\[(\w+)\]$/, ":$1") : "");
             if (base === "layout.hbs") {
                 files.layout = entryPath;
+                continue;
+            }
+            if (base === "layout.ts") {
+                files.layoutHandlerPath = entryPath;
                 continue;
             }
             files[name] = {
@@ -86,5 +95,4 @@ const getRouter = (rootPath) => {
     }
 };
 exports.getRouter = getRouter;
-// Use the files array as needed
 //# sourceMappingURL=index.js.map

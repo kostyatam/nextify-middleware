@@ -1,26 +1,25 @@
 import supertest from "supertest";
 import handlebars from "handlebars";
-import { readFileSync } from "fs";
 import express from "express";
 import { getRouter } from "nextify-middleware";
 import path from "path";
+import { compileFile } from "../utils";
 
 const routerPath = path.join(__dirname, "pages");
 const app = express();
 app.use(getRouter(routerPath));
 const request = supertest(app);
 
-const defaultPage = readFileSync(
-  path.resolve(routerPath, "../../default/view.hbs"),
-  "utf8"
+const defaultPage = compileFile(
+  path.resolve(routerPath, "../../default/view.hbs")
 );
 
-const defaultLayout = handlebars.compile(
-  readFileSync(path.resolve(routerPath, "../../default/layout.hbs"), "utf8")
+const defaultLayout = compileFile(
+  path.resolve(routerPath, "../../default/layout.hbs")
 );
 
-const customLayout = handlebars.compile(
-  readFileSync(path.resolve(routerPath, "custom-layout/layout.hbs"), "utf8")
+const customLayout = compileFile(
+  path.resolve(routerPath, "custom-layout/layout.hbs")
 );
 
 require("handlebars-helpers")({
@@ -37,39 +36,37 @@ describe("Check router", () => {
 
   it(`use custom template`, async () => {
     const response = await request.get("/custom-template");
-    const page = readFileSync(
-      path.resolve(routerPath, "custom-template.hbs"),
-      "utf8"
-    );
+    const page = compileFile(path.resolve(routerPath, "custom-template.hbs"));
     expect(response.status).toBe(200);
     expect(response.type).toBe("text/html");
     expect(response.text).toBe(defaultLayout({ body: page }));
   });
 
   it(`use custom layout`, async () => {
+    const pageTitle = "Custom Layout";
     const response = await request.get("/custom-layout");
-    const page = readFileSync(
-      path.resolve(routerPath, "custom-layout/index.hbs"),
-      "utf8"
+    const page = compileFile(
+      path.resolve(routerPath, "custom-layout/index.hbs")
     );
 
     expect(response.status).toBe(200);
     expect(response.type).toBe("text/html");
-    expect(response.text).toBe(customLayout({ body: page }));
+    expect(response.text).toBe(customLayout({ pageTitle, body: page }));
   });
 
   it(`use custom layout, handler and template`, async () => {
+    const pageTitle = "Custom Layout";
     const response = await request.get("/custom-layout/handler-and-template");
-    const page = readFileSync(
-      path.resolve(routerPath, "custom-layout/handler-and-template/index.hbs"),
-      "utf8"
+    const page = compileFile(
+      path.resolve(routerPath, "custom-layout/handler-and-template/index.hbs")
     );
 
     expect(response.status).toBe(200);
     expect(response.type).toBe("text/html");
     expect(response.text).toBe(
       customLayout({
-        body: handlebars.compile(page)({
+        pageTitle,
+        body: page({
           message: "Hello, World!",
         }),
       })
@@ -78,35 +75,33 @@ describe("Check router", () => {
 
   it(`use slug`, async () => {
     const response = await request.get("/slug/random-slug");
-    const page = readFileSync(
-      path.resolve(routerPath, "slug/[slug].hbs"),
-      "utf8"
-    );
+    const page = compileFile(path.resolve(routerPath, "slug/[slug].hbs"));
 
     expect(response.status).toBe(200);
     expect(response.type).toBe("text/html");
     expect(response.text).toBe(
       defaultLayout({
-        body: handlebars.compile(page)({
+        body: page({
           params: { slug: "random-slug" },
         }),
       })
     );
   });
 
-  it(`deep layout nesting`, async () => {
-    const response = await request.get("/custom-layout/deep/deep/deep");
-    const page = readFileSync(
-      path.resolve(routerPath, "custom-layout/deep/deep/deep/index.hbs"),
-      "utf8"
+  it(`deep layout nesting with slugs`, async () => {
+    const pageTitle = "Custom Layout";
+    const response = await request.get("/custom-layout/deep/deep/deeper");
+    const page = compileFile(
+      path.resolve(routerPath, "custom-layout/deep/[deep]/[deeper]/index.hbs")
     );
 
     expect(response.status).toBe(200);
     expect(response.type).toBe("text/html");
     expect(response.text).toBe(
       customLayout({
-        body: handlebars.compile(page)({
-          message: "Hello, World!",
+        pageTitle,
+        body: page({
+          params: { deep: "deep", deeper: "deeper" },
         }),
       })
     );

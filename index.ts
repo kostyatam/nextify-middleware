@@ -2,8 +2,9 @@ import { RequestHandler, Router, Request } from "express";
 import path from "path";
 import { DirTree, Route, isRoute } from "./types";
 import defaultHandler from "./default/handler";
-import fs, { Dir, read } from "fs";
+import fs from "fs";
 import handlebars from "handlebars";
+import { compileFile } from "./utils";
 
 require("handlebars-helpers")({
   handlebars: handlebars,
@@ -14,9 +15,6 @@ type DefaultHandlerData = ReturnType<typeof defaultHandler>;
 type Handler = (
   request: Request
 ) => { [index: string]: string } & DefaultHandlerData;
-
-const compileFile = (filePath: string) =>
-  handlebars.compile(fs.readFileSync(filePath, "utf8"));
 
 const defaultLayout = compileFile(path.join(__dirname, "default/layout.hbs"));
 
@@ -32,7 +30,10 @@ function getRouteHandler(route: Route): RequestHandler {
     const handlerData = route.handlerPath
       ? (require(route.handlerPath).default as Handler)(req)
       : {};
-    const data = { ...defaultData, ...handlerData };
+    const layoutData = route.layoutHandlerPath
+      ? (require(route.layoutHandlerPath).default as Handler)(req)
+      : {};
+    const data = { ...defaultData, ...layoutData, ...handlerData };
     const body = view(data);
 
     if (defaultData.isHtmxRequest) {
@@ -49,18 +50,19 @@ export const getRouter = (rootPath: string) => {
 
   readDirectory(rootPath, files);
   buildRouter(files);
-
   return router;
 
   function buildRouter(dirTree: DirTree) {
     const files = Object.keys(dirTree);
     for (const key of files) {
-      if (key === "layout") {
+      if (key === "layout" || key === "layoutHandlerPath") {
         continue;
       }
 
       const value = dirTree[key];
       value.layout = value.layout || dirTree.layout;
+      value.layoutHandlerPath =
+        value.layoutHandlerPath || dirTree.layoutHandlerPath;
       if (isRoute(value)) {
         router.get(value.routePath, getRouteHandler(value));
       } else {
@@ -86,12 +88,17 @@ export const getRouter = (rootPath: string) => {
       const { dir, name, ext, base } = path.parse(relativePath);
       const routePath = path.join(
         "/",
-        dir.replace(/^\[(.+)\]$/, ":$1"),
-        name !== "index" ? name.replace(/^\[(.+)\]$/, ":$1") : ""
+        dir.replace(/\[(\w+)\]/g, ":$1"),
+        name !== "index" ? name.replace(/^\[(\w+)\]$/, ":$1") : ""
       );
 
       if (base === "layout.hbs") {
         files.layout = entryPath;
+        continue;
+      }
+
+      if (base === "layout.ts") {
+        files.layoutHandlerPath = entryPath;
         continue;
       }
 
@@ -104,5 +111,3 @@ export const getRouter = (rootPath: string) => {
     }
   }
 };
-
-// Use the files array as needed
