@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "jsx": "react-jsx",
     "module": "commonjs",
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -13,5 +14,5 @@
       "*": ["node_modules/*"]
     }
   },
-  "include": ["index.ts"]
+  "include": ["index.tsx"]
 }

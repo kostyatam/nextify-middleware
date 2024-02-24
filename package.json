@@ -5,13 +5,13 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "npm run build && npm link \"nextify-middleware\" && jest --silent=false",
-    "build": "rimraf dist && tsc --project ./tsconfig.json && cp default/**.hbs dist/default"
+    "build": "rimraf dist && tsc --project ./tsconfig.json & cp default/**.tsx dist/default"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "handlebars": "^4.7.8",
-    "handlebars-helpers": "^0.10.0"
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
   },
   "peerDependencies": {
     "express": "^4.18.2"
@@ -20,11 +20,13 @@
     "@types/express": "^4.17.21",
     "@types/jest": "^29.5.11",
     "@types/node": "^20.10.5",
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
     "@types/supertest": "^6.0.1",
     "jest": "^29.7.0",
+    "rimraf": "^5.0.5",
     "supertest": "^6.3.3",
     "ts-jest": "^29.1.1",
-    "typescript": "^5.3.3",
-    "rimraf": "^5.0.5"
+    "typescript": "^5.3.3"
   }
 }

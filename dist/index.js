@@ -4,93 +4,58 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getRouter = void 0;
+const jsx_runtime_1 = require("react/jsx-runtime");
 const express_1 = require("express");
 const path_1 = __importDefault(require("path"));
-const types_1 = require("./types");
-const handler_1 = __importDefault(require("./default/handler"));
 const fs_1 = __importDefault(require("fs"));
-const handlebars_1 = __importDefault(require("handlebars"));
-const utils_1 = require("./utils");
-require("handlebars-helpers")({
-    handlebars: handlebars_1.default,
-});
-const defaultLayout = (0, utils_1.compileFile)(path_1.default.join(__dirname, "default/layout.hbs"));
-const defaultView = (0, utils_1.compileFile)(path_1.default.join(__dirname, "default/view.hbs"));
-function getRouteHandler(route) {
-    const view = route.templatePath
-        ? (0, utils_1.compileFile)(route.templatePath)
-        : defaultView;
-    const layout = route.layout ? (0, utils_1.compileFile)(route.layout) : defaultLayout;
+const server_1 = __importDefault(require("react-dom/server"));
+const layout_1 = __importDefault(require("./default/layout"));
+function getRouteHandler(Component, Layout) {
     return (req, res) => {
-        const defaultData = (0, handler_1.default)(req);
-        const handlerData = route.handlerPath
-            ? require(route.handlerPath).default(req)
-            : {};
-        const layoutData = route.layoutHandlerPath
-            ? require(route.layoutHandlerPath).default(req)
-            : {};
-        const data = Object.assign(Object.assign(Object.assign({}, defaultData), layoutData), handlerData);
-        const body = view(data);
-        if (defaultData.isHtmxRequest) {
-            res.send(body);
+        const isHtmxRequest = (req === null || req === void 0 ? void 0 : req.get("HX-Request")) === "true";
+        if (isHtmxRequest) {
+            res.send(server_1.default.renderToStaticMarkup((0, jsx_runtime_1.jsx)(Component, { req: req })));
         }
         else {
-            res.send(layout(Object.assign(Object.assign({}, data), { body })));
+            res.send(server_1.default.renderToStaticMarkup((0, jsx_runtime_1.jsx)(Layout, { req: req, children: (0, jsx_runtime_1.jsx)(Component, { req: req }) })));
         }
     };
 }
 const getRouter = (rootPath) => {
-    const files = {};
     const router = (0, express_1.Router)();
-    readDirectory(rootPath, files);
-    buildRouter(files);
+    readDirectory(rootPath, layout_1.default);
     return router;
-    function buildRouter(dirTree) {
-        const files = Object.keys(dirTree);
-        for (const key of files) {
-            if (key === "layout" || key === "layoutHandlerPath") {
+    function readDirectory(dirPath, layout) {
+        const files = fs_1.default.readdirSync(dirPath);
+        const directories = [];
+        const pages = [];
+        for (const file of files) {
+            const absolutePath = path_1.default.join(dirPath, file);
+            if (file === "layout.tsx") {
+                layout = require(absolutePath).default;
                 continue;
             }
-            const value = dirTree[key];
-            value.layout = value.layout || dirTree.layout;
-            value.layoutHandlerPath =
-                value.layoutHandlerPath || dirTree.layoutHandlerPath;
-            if ((0, types_1.isRoute)(value)) {
-                router.get(value.routePath, getRouteHandler(value));
+            if (!fs_1.default.statSync(absolutePath).isDirectory()) {
+                pages.push(absolutePath);
             }
             else {
-                buildRouter(value);
+                directories.push(absolutePath);
             }
         }
-    }
-    function readDirectory(currentPath, files) {
-        var _a, _b;
-        const entries = fs_1.default.readdirSync(currentPath);
-        for (const entry of entries) {
-            const entryPath = path_1.default.join(currentPath, entry);
-            const relativePath = entryPath.replace(rootPath, "");
-            const stat = fs_1.default.statSync(entryPath);
-            if (stat.isDirectory()) {
-                const dirName = path_1.default.basename(relativePath);
-                files[dirName] = files[dirName] || {};
-                readDirectory(entryPath, files[dirName]);
-                continue;
-            }
-            const { dir, name, ext, base } = path_1.default.parse(relativePath);
-            const routePath = path_1.default.join("/", dir.replace(/\[(\w+)\]/g, ":$1"), name !== "index" ? name.replace(/^\[(\w+)\]$/, ":$1") : "");
-            if (base === "layout.hbs") {
-                files.layout = entryPath;
-                continue;
-            }
-            if (base === "layout.ts") {
-                files.layoutHandlerPath = entryPath;
-                continue;
-            }
-            files[name] = {
-                templatePath: ext === ".hbs" ? entryPath : ((_a = files[name]) === null || _a === void 0 ? void 0 : _a.templatePath) || "",
-                handlerPath: ext === ".ts" ? entryPath : ((_b = files[name]) === null || _b === void 0 ? void 0 : _b.handlerPath) || "",
-                routePath,
-            };
+        for (const pagePath of pages) {
+            const component = require(pagePath).default;
+            const handler = getRouteHandler(component, layout);
+            const routePath = pagePath
+                .replace(rootPath, "")
+                .replace(/(\/[^\/]+)(\.tsx)/g, "$1")
+                .replace(/\/(index)/, "")
+                .replace(/\[(\w+)\]/g, ":$1")
+                .replace(/\/$/, "") || "/";
+            router.get(routePath, handler);
+            console.log(`Route: ${routePath}, Layout: ${layout === null || layout === void 0 ? void 0 : layout.name}`);
+        }
+        for (const dirPath of directories) {
+            readDirectory(dirPath, layout);
         }
     }
 };
