@@ -15,14 +15,14 @@ app.use(router);
 describe("Check router", () => {
   it(`use default template`, async () => {
     const request = supertest(app);
-    const response = await request.get("/?foo=hi");
+    const response = await request.get("/?foo=hello");
     const Component = require("./pages/index").default;
     expect(response.status).toBe(200);
     expect(response.type).toBe("text/html");
     expect(response.text).toBe(
       ReactDOM.renderToStaticMarkup(
         <DefaultLayout>
-          <Component req={{ query: { foo: "hi" } }} />
+          <Component req={{ query: { foo: "hello" } }} bar={"world"} />
         </DefaultLayout>
       )
     );

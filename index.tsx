@@ -18,17 +18,20 @@ type RouteLayout = (props: RouteLayoutProps) => JSX.Element;
 
 function getRouteHandler(
   Component: RouteComponent,
-  Layout: RouteLayout
+  Layout: RouteLayout,
+  getAsyncProps?: (req: Request) => Promise<Record<string, unknown>> | undefined
 ): RequestHandler {
-  return (req, res) => {
+  return async (req, res) => {
     const isHtmxRequest = req?.get("HX-Request") === "true";
+    const asyncProps = getAsyncProps ? await getAsyncProps(req) : {};
+    const props = { req, ...asyncProps };
     if (isHtmxRequest) {
-      res.send(ReactDOM.renderToStaticMarkup(<Component req={req} />));
+      res.send(ReactDOM.renderToStaticMarkup(<Component {...props} />));
     } else {
       res.send(
         ReactDOM.renderToStaticMarkup(
-          <Layout req={req}>
-            <Component req={req} />
+          <Layout {...props}>
+            <Component {...props} />
           </Layout>
         )
       );
@@ -63,7 +66,8 @@ export const getRouter = (rootPath: string) => {
 
     for (const pagePath of pages) {
       const component = require(pagePath).default;
-      const handler = getRouteHandler(component, layout);
+      const getAsyncProps = require(pagePath).getAsyncProps;
+      const handler = getRouteHandler(component, layout, getAsyncProps);
       const routePath =
         pagePath
           .replace(rootPath, "")
@@ -72,7 +76,6 @@ export const getRouter = (rootPath: string) => {
           .replace(/\[(\w+)\]/g, ":$1")
           .replace(/\/$/, "") || "/";
       router.get(routePath, handler);
-      console.log(`Route: ${routePath}, Layout: ${layout?.name}`);
     }
 
     for (const dirPath of directories) {

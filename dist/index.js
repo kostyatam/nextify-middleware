@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -10,16 +19,18 @@ const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const server_1 = __importDefault(require("react-dom/server"));
 const layout_1 = __importDefault(require("./default/layout"));
-function getRouteHandler(Component, Layout) {
-    return (req, res) => {
+function getRouteHandler(Component, Layout, getAsyncProps) {
+    return (req, res) => __awaiter(this, void 0, void 0, function* () {
         const isHtmxRequest = (req === null || req === void 0 ? void 0 : req.get("HX-Request")) === "true";
+        const asyncProps = getAsyncProps ? yield getAsyncProps(req) : {};
+        const props = Object.assign({ req }, asyncProps);
         if (isHtmxRequest) {
-            res.send(server_1.default.renderToStaticMarkup((0, jsx_runtime_1.jsx)(Component, { req: req })));
+            res.send(server_1.default.renderToStaticMarkup((0, jsx_runtime_1.jsx)(Component, Object.assign({}, props))));
         }
         else {
-            res.send(server_1.default.renderToStaticMarkup((0, jsx_runtime_1.jsx)(Layout, { req: req, children: (0, jsx_runtime_1.jsx)(Component, { req: req }) })));
+            res.send(server_1.default.renderToStaticMarkup((0, jsx_runtime_1.jsx)(Layout, Object.assign({}, props, { children: (0, jsx_runtime_1.jsx)(Component, Object.assign({}, props)) }))));
         }
-    };
+    });
 }
 const getRouter = (rootPath) => {
     const router = (0, express_1.Router)();
@@ -44,7 +55,8 @@ const getRouter = (rootPath) => {
         }
         for (const pagePath of pages) {
             const component = require(pagePath).default;
-            const handler = getRouteHandler(component, layout);
+            const getAsyncProps = require(pagePath).getAsyncProps;
+            const handler = getRouteHandler(component, layout, getAsyncProps);
             const routePath = pagePath
                 .replace(rootPath, "")
                 .replace(/(\/[^\/]+)(\.tsx)/g, "$1")
@@ -52,7 +64,6 @@ const getRouter = (rootPath) => {
                 .replace(/\[(\w+)\]/g, ":$1")
                 .replace(/\/$/, "") || "/";
             router.get(routePath, handler);
-            console.log(`Route: ${routePath}, Layout: ${layout === null || layout === void 0 ? void 0 : layout.name}`);
         }
         for (const dirPath of directories) {
             readDirectory(dirPath, layout);
