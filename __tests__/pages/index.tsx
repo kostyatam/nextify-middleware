@@ -1,5 +1,5 @@
 import React from "react";
-import { Request } from "express";
+import { Request, Response } from "express";
 
 interface Props {
   req: Request;
@@ -17,3 +17,8 @@ export default function defaultComponent({ req, bar }: Props) {
     </span>
   );
 }
+
+export const post = (req: Request, res: Response) => {
+  const { message } = req.body;
+  res.json({ message });
+};

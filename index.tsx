@@ -65,9 +65,6 @@ export const getRouter = (rootPath: string) => {
     }
 
     for (const pagePath of pages) {
-      const component = require(pagePath).default;
-      const getAsyncProps = require(pagePath).getAsyncProps;
-      const handler = getRouteHandler(component, layout, getAsyncProps);
       const routePath =
         pagePath
           .replace(rootPath, "")
@@ -75,7 +72,34 @@ export const getRouter = (rootPath: string) => {
           .replace(/\/(index)/, "")
           .replace(/\[(\w+)\]/g, ":$1")
           .replace(/\/$/, "") || "/";
-      router.get(routePath, handler);
+      const {
+        default: component,
+        getAsyncProps,
+        post,
+        get,
+        put,
+        delete: del,
+      } = require(pagePath);
+
+      if (component) {
+        const handler = getRouteHandler(component, layout, getAsyncProps);
+        router.get(routePath, handler);
+      }
+
+      if (post) {
+        router.post(routePath, post);
+      }
+
+      if (get && !component) {
+        router.get(routePath, get);
+      }
+
+      if (put) {
+        router.put(routePath, put);
+      }
+      if (del) {
+        router.delete(routePath, del);
+      }
     }
 
     for (const dirPath of directories) {

@@ -9,7 +9,9 @@ import ReactDOM from "react-dom/server";
 
 const routerPath = path.join(__dirname, "pages");
 const app = express();
+app.use(express.json());
 const router = getRouter(routerPath);
+
 app.use(router);
 
 describe("Check router", () => {
@@ -87,5 +89,14 @@ describe("Check router", () => {
         </CustomLayout>
       )
     );
+  });
+
+  it(`post method`, async () => {
+    const request = supertest(app);
+    const body = { message: "Hello, world!" };
+    const response = await request.post("/").send(body);
+    expect(response.status).toBe(200);
+    expect(response.type).toBe("application/json");
+    expect(response.text).toBe(JSON.stringify(body));
   });
 });
