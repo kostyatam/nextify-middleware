@@ -1,7 +1,7 @@
 import { Request } from "express";
 import React from "react";
 
-export default function defaultLayout({
+export default function DefaultLayout({
   req,
   children,
 }: {

@@ -1,3 +1,5 @@
-export default ({ req }: { req: { params: { [index: string]: string } } }) => {
-  return req.params.slug;
+import { Request } from "express";
+
+export default ({ req }: { req: Request }) => {
+  return <>{req.params.slug}</>;
 };

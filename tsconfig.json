@@ -8,11 +8,12 @@
     "noImplicitAny": true,
     "moduleResolution": "node",
     "sourceMap": true,
+    "skipLibCheck": true,
     "outDir": "dist",
     "baseUrl": ".",
     "paths": {
       "*": ["node_modules/*"]
     }
   },
-  "include": ["index.tsx"]
+  "include": ["index.ts"]
 }

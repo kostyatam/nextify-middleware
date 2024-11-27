@@ -4,12 +4,14 @@
   "description": "express middleware for generating *nextjs-like* filesystem based router with typescript handlers, handlebars templates and htmx",
   "main": "dist/index.js",
   "scripts": {
-    "test": "npm run build && npm link \"nextify-middleware\" && jest --silent=false",
-    "build": "rimraf dist && tsc --project ./tsconfig.json & cp default/**.tsx dist/default"
+    "test": "npm run build && npm link nextify-middleware && jest --silent=false",
+    "build": "rimraf dist && tsc --project ./tsconfig.json && cp default/**.tsx dist/default"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "esbuild": "^0.24.0",
+    "fast-glob": "^3.3.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
@@ -27,6 +29,6 @@
     "rimraf": "^5.0.5",
     "supertest": "^6.3.3",
     "ts-jest": "^29.1.1",
-    "typescript": "^5.3.3"
+    "typescript": "^5.7.2"
   }
 }
