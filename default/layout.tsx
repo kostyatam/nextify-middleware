@@ -1,12 +1,12 @@
 import { Request } from "express";
 import React from "react";
 
-export default function defaultLayout({
+export default function DefaultLayout({
   req,
   children,
 }: {
   req?: Request;
-  children: JSX.Element[] | JSX.Element;
+  children: React.ReactNode;
 }) {
   return (
     <html>

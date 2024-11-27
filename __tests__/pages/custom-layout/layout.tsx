@@ -1,19 +1,12 @@
 import { Request } from "express";
 import React from "react";
+import { CustomLayoutComponent } from "../../components/CustomLayoutComponent";
 
-export default function CustomLayout({
+export default async function CustomLayout({
   children,
 }: {
-  req?: Request;
-  children: JSX.Element[] | JSX.Element;
+  children: React.ReactNode;
 }) {
-  return (
-    <html>
-      <head>
-        <meta charSet="UTF-8" />
-        <title>Custom Layout</title>
-      </head>
-      <body>Custom Layout: {children}</body>
-    </html>
-  );
+  await new Promise((resolve) => setTimeout(resolve, 100));
+  return <CustomLayoutComponent>{children}</CustomLayoutComponent>;
 }
