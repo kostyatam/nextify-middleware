@@ -1,3 +1,5 @@
+import React from "react";
+
 export default () => {
-  return 0;
+  return <>0</>;
 };

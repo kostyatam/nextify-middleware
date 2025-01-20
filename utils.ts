@@ -1,6 +1,4 @@
-import handlebars from "handlebars";
 import util from "util";
-import fs from "fs";
 
 export const consoleDeepObject = <T>(obj: {}) =>
   console.log(
